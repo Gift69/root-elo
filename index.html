@@ -1,49 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Root Faction Elo Tracker & Tier List</title>
+    <title>Root Elo Tracker</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        rootForest: '#1e382b',
-                        rootForestLight: '#2c4f3e',
-                        rootGold: '#d99036',
-                        rootGoldHover: '#b87728',
-                        rootPaper: '#f7f4ea',
-                        rootPaperDark: '#ebe4d3',
-                        rootBorder: '#c2b69d',
-                        rootText: '#2d241e',
-                        marquise: '#e8722a',
-                        eyrie: '#2170b5',
-                        alliance: '#33a02c',
-                        vagabond: '#7570b3',
-                        lizard: '#fb9a99',
-                        riverfolk: '#1b9e77',
-                        duchy: '#e6ab02',
-                        corvid: '#a6761d',
-                        hundreds: '#e41a1c',
-                        keepers: '#666666'
-                    },
-                    fontFamily: {
-                        cinzel: ['Cinzel', 'serif'],
-                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                        wood: {
+                            50: '#fdf8f0',
+                            100: '#f9eedb',
+                            800: '#4a2c11',
+                            900: '#2d1806',
+                        }
                     }
                 }
             }
@@ -51,750 +29,545 @@
     </script>
     <style>
         body {
-            background-color: #1e382b;
-            background-image: radial-gradient(#2c4f3e 1px, transparent 1px);
-            background-size: 24px 24px;
-            color: #2d241e;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .cinzel-title {
-            font-family: 'Cinzel', serif;
-        }
-        .wood-panel {
-            background: linear-gradient(135deg, #f7f4ea 0%, #ebe4d3 100%);
-            border: 2px solid #c2b69d;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-        }
-        .wood-card {
-            background-color: #ffffff;
-            border: 1px solid #dcd3be;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-            transition: all 0.2s ease-in-out;
-        }
-        .wood-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e382b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #d99036;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #b87728;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
         }
     </style>
 </head>
-<body class="min-h-screen pb-12 text-slate-800">
+<body class="min-h-screen pb-12">
 
-    <!-- Supabase Configuration Modal (Prompts if credentials missing) -->
-    <div id="configModal" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 hidden">
-        <div class="wood-panel rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-xl font-extrabold cinzel-title text-rootForest flex items-center gap-2">
-                <i data-lucide="database" class="w-5 h-5 text-rootGold"></i> Connect Supabase Database
-            </h3>
-            <p class="text-xs text-stone-600">Enter your Supabase Project URL and Public Anon Key below to enable cross-device cloud syncing.</p>
-            <div>
-                <label class="block text-xs font-bold text-stone-700 mb-1">Supabase URL</label>
-                <input type="text" id="cfg-url" placeholder="https://xyz.supabase.co" class="w-full p-2 text-sm rounded-lg border border-stone-300 bg-white font-mono">
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-msg">Notification</span>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-wide text-amber-500">ROOT ELO TRACKER</h1>
+                    <p class="text-xs text-slate-400">Multiplayer Elo & Dynamic Tier List</p>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-stone-700 mb-1">Anon Public Key</label>
-                <input type="text" id="cfg-key" placeholder="eyJhbGciOi..." class="w-full p-2 text-sm rounded-lg border border-stone-300 bg-white font-mono">
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="saveSupabaseConfig()" class="px-4 py-2 bg-rootGold hover:bg-rootGoldHover text-rootForest font-bold rounded-lg text-sm shadow">
-                    Save Credentials
+            <div class="flex items-center gap-2">
+                <div id="sync-status" class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Connected</span>
+                </div>
+                <button onclick="openConfigModal()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                    <i class="fas fa-cog text-lg"></i>
                 </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8 space-y-8">
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-800 gap-4 text-sm font-medium">
+            <button id="tab-btn-tier" onclick="switchTab('tier')" class="pb-3 border-b-2 border-amber-500 text-amber-500 flex items-center gap-2">
+                <i class="fas fa-trophy"></i> Faction Tier List
+            </button>
+            <button id="tab-btn-players" onclick="switchTab('players')" class="pb-3 border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2">
+                <i class="fas fa-users"></i> Player Standings
+            </button>
+            <button id="tab-btn-matches" onclick="switchTab('matches')" class="pb-3 border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2">
+                <i class="fas fa-history"></i> Match History
+            </button>
+        </div>
+
+        <!-- TAB 1: FACTION TIER LIST -->
+        <section id="tab-tier" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-200">Faction Tier List</h2>
+                <button onclick="openLogModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-xl text-sm shadow-lg shadow-amber-600/20 transition flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Log Match
+                </button>
+            </div>
+
+            <div id="tier-container" class="space-y-4">
+                <!-- Dynamically populated tier cards -->
+            </div>
+        </section>
+
+        <!-- TAB 2: PLAYER STANDINGS -->
+        <section id="tab-players" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-200">Player Leaderboard</h2>
+                <button onclick="openAddPlayerModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl text-sm border border-slate-700 transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> Add Player
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-800/50 text-slate-400 font-semibold uppercase text-xs">
+                        <tr>
+                            <th class="p-4">Rank</th>
+                            <th class="p-4">Player</th>
+                            <th class="p-4">Elo Rating</th>
+                            <th class="p-4">Games Played</th>
+                            <th class="p-4">Wins</th>
+                            <th class="p-4">Win Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="player-table-body" class="divide-y divide-slate-800">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 3: MATCH HISTORY -->
+        <section id="tab-matches" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-200">Logged Matches</h2>
+                <button onclick="confirmResetData()" class="text-rose-400 hover:text-rose-300 text-sm flex items-center gap-2">
+                    <i class="fas fa-trash"></i> Reset All Data
+                </button>
+            </div>
+
+            <div id="match-history-list" class="space-y-3">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LOG MATCH MODAL -->
+    <div id="logModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 class="font-bold text-lg text-amber-500"><i class="fas fa-dice"></i> Log 4-Player Match</h3>
+                <button onclick="closeLogModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <form id="match-form" onsubmit="submitMatch(event)" class="space-y-4">
+                <!-- Positions 1 to 4 -->
+                <script>
+                    const places = ["1st Place (Winner)", "2nd Place", "3rd Place", "4th Place"];
+                    const colors = ["border-amber-500/50", "border-slate-500/50", "border-amber-700/50", "border-slate-800"];
+                </script>
+                
+                <div id="placements-container" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeLogModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-lg shadow-amber-600/20 transition">Save Match</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD PLAYER MODAL -->
+    <div id="addPlayerModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <h3 class="font-bold text-lg text-slate-200">Add New Player</h3>
+            <input type="text" id="new-player-name" placeholder="Player Name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-amber-500">
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeAddPlayerModal()" class="w-1/2 py-2 rounded-xl border border-slate-700 text-slate-300">Cancel</button>
+                <button onclick="submitAddPlayer()" class="w-1/2 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold">Add</button>
             </div>
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-rootForestLight border-b-4 border-rootGold shadow-xl text-amber-50 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-rootGold rounded-lg flex items-center justify-center text-rootForest shadow-md font-bold text-xl sm:text-2xl border-2 border-amber-200">
-                        <i class="fa-solid fa-tree"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-wide cinzel-title text-amber-100 flex items-center gap-2">
-                            ROOT <span class="text-rootGold text-lg sm:text-xl">Elo & Tier List</span>
-                        </h1>
-                        <p class="text-xs text-emerald-200 font-medium">Synced Cloud Meta Tracker</p>
-                    </div>
-                </div>
+    <!-- CONFIG MODAL -->
+    <div id="configModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-slate-200">Configuration</h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-400">
+                Your database connection is hardcoded and active. All logged games automatically sync across devices.
+            </p>
 
-                <!-- Status indicator -->
-                <div id="syncStatus" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-700">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="syncStatusText">Cloud Synced</span>
+            <div class="space-y-3 pt-2">
+                <h4 class="text-sm font-semibold text-slate-300">Add Custom Faction</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="custom-faction-input" placeholder="e.g. Knaves of the Deepwood" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                    <button onclick="submitAddFaction()" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-xl text-sm font-semibold">Add</button>
                 </div>
             </div>
 
-            <!-- Global Actions -->
-            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-center md:justify-end">
-                <button onclick="fetchCloudMatches()" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-xs font-semibold rounded-md border border-emerald-600 transition flex items-center gap-1 shadow">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sync
-                </button>
-                <button onclick="openConfigModal()" class="px-3 py-1.5 bg-stone-700 hover:bg-stone-600 text-xs font-semibold rounded-md border border-stone-500 transition flex items-center gap-1 shadow">
-                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Config
-                </button>
-                <button onclick="exportJSON()" class="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-xs font-semibold rounded-md border border-amber-500 transition flex items-center gap-1 shadow">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
-                </button>
+            <div class="pt-4 border-t border-slate-800 flex justify-end">
+                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm text-slate-300">Close</button>
             </div>
         </div>
+    </div>
 
-        <!-- Navigation Tabs -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
-            <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto pb-2" id="navigationTabs">
-                <button onclick="switchTab('tierlist')" id="tab-tierlist" class="tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootPaper text-rootForest border-t-2 border-x-2 border-rootGold transition flex items-center gap-1.5 whitespace-nowrap">
-                    <i data-lucide="trophy" class="w-4 h-4"></i> Faction Tier List
-                </button>
-                <button onclick="switchTab('logmatch')" id="tab-logmatch" class="tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootForestLight text-amber-200 hover:bg-emerald-800 transition flex items-center gap-1.5 whitespace-nowrap">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Log Match
-                </button>
-                <button onclick="switchTab('matchhistory')" id="tab-matchhistory" class="tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootForestLight text-amber-200 hover:bg-emerald-800 transition flex items-center gap-1.5 whitespace-nowrap">
-                    <i data-lucide="history" class="w-4 h-4"></i> Match History
-                </button>
-                <button onclick="switchTab('players')" id="tab-players" class="tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootForestLight text-amber-200 hover:bg-emerald-800 transition flex items-center gap-1.5 whitespace-nowrap">
-                    <i data-lucide="users" class="w-4 h-4"></i> Players
-                </button>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        <!-- Toast Notification -->
-        <div id="toast" class="hidden fixed bottom-6 right-6 z-50 bg-rootForestLight text-amber-100 border-2 border-rootGold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all">
-            <i id="toastIcon" data-lucide="check-circle-2" class="w-5 h-5 text-rootGold"></i>
-            <span id="toastMessage" class="text-sm font-medium"></span>
-        </div>
-
-        <!-- VIEW 1: FACTION TIER LIST -->
-        <section id="view-tierlist" class="space-y-6">
-            <div class="wood-panel rounded-2xl p-4 sm:p-6 text-rootText flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-bold cinzel-title text-rootForest flex items-center gap-2">
-                        <i class="fa-solid fa-shield-halved text-rootGold"></i> Faction Tier List
-                    </h2>
-                    <p class="text-xs sm:text-sm text-stone-600 mt-1">Calculated via multi-player pairwise Elo ($K=32$) from logged cloud games.</p>
-                </div>
-                <div class="flex items-center gap-3 w-full sm:w-auto justify-around">
-                    <div class="bg-white/80 border border-rootBorder px-4 py-2 rounded-xl text-center shadow-sm flex-1 sm:flex-none">
-                        <div id="totalGamesCount" class="text-xl sm:text-2xl font-black text-rootForest">0</div>
-                        <div class="text-[10px] sm:text-xs uppercase font-bold text-stone-500">Games Logged</div>
-                    </div>
-                    <div class="bg-white/80 border border-rootBorder px-4 py-2 rounded-xl text-center shadow-sm flex-1 sm:flex-none">
-                        <div id="activeFactionsCount" class="text-xl sm:text-2xl font-black text-rootGold">10</div>
-                        <div class="text-[10px] sm:text-xs uppercase font-bold text-stone-500">Active Factions</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tiers -->
-            <div class="space-y-4" id="tierContainer">
-                <!-- S Tier -->
-                <div class="wood-panel rounded-2xl overflow-hidden shadow-lg border-2 border-red-300">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="w-full md:w-32 bg-red-600 text-white font-extrabold cinzel-title text-2xl md:text-3xl flex flex-col items-center justify-center p-3 border-b md:border-b-0 md:border-r border-red-700">
-                            <span>S</span>
-                            <span class="text-[10px] sm:text-xs font-sans font-normal opacity-90">≥ 1600 Elo</span>
-                        </div>
-                        <div class="p-3 sm:p-4 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="tier-S-cards"></div>
-                    </div>
-                </div>
-
-                <!-- A Tier -->
-                <div class="wood-panel rounded-2xl overflow-hidden shadow-lg border-2 border-amber-300">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="w-full md:w-32 bg-amber-500 text-white font-extrabold cinzel-title text-2xl md:text-3xl flex flex-col items-center justify-center p-3 border-b md:border-b-0 md:border-r border-amber-600">
-                            <span>A</span>
-                            <span class="text-[10px] sm:text-xs font-sans font-normal opacity-90">1525 - 1599</span>
-                        </div>
-                        <div class="p-3 sm:p-4 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="tier-A-cards"></div>
-                    </div>
-                </div>
-
-                <!-- B Tier -->
-                <div class="wood-panel rounded-2xl overflow-hidden shadow-lg border-2 border-yellow-300">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="w-full md:w-32 bg-yellow-500 text-white font-extrabold cinzel-title text-2xl md:text-3xl flex flex-col items-center justify-center p-3 border-b md:border-b-0 md:border-r border-yellow-600">
-                            <span>B</span>
-                            <span class="text-[10px] sm:text-xs font-sans font-normal opacity-90">1475 - 1524</span>
-                        </div>
-                        <div class="p-3 sm:p-4 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="tier-B-cards"></div>
-                    </div>
-                </div>
-
-                <!-- C Tier -->
-                <div class="wood-panel rounded-2xl overflow-hidden shadow-lg border-2 border-emerald-300">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="w-full md:w-32 bg-emerald-600 text-white font-extrabold cinzel-title text-2xl md:text-3xl flex flex-col items-center justify-center p-3 border-b md:border-b-0 md:border-r border-emerald-700">
-                            <span>C</span>
-                            <span class="text-[10px] sm:text-xs font-sans font-normal opacity-90">1400 - 1474</span>
-                        </div>
-                        <div class="p-3 sm:p-4 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="tier-C-cards"></div>
-                    </div>
-                </div>
-
-                <!-- D Tier -->
-                <div class="wood-panel rounded-2xl overflow-hidden shadow-lg border-2 border-slate-400">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="w-full md:w-32 bg-slate-600 text-white font-extrabold cinzel-title text-2xl md:text-3xl flex flex-col items-center justify-center p-3 border-b md:border-b-0 md:border-r border-slate-700">
-                            <span>D</span>
-                            <span class="text-[10px] sm:text-xs font-sans font-normal opacity-90">&lt; 1400 Elo</span>
-                        </div>
-                        <div class="p-3 sm:p-4 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="tier-D-cards"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW 2: LOG MATCH -->
-        <section id="view-logmatch" class="hidden space-y-6">
-            <div class="wood-panel rounded-2xl p-4 sm:p-6 shadow-xl max-w-4xl mx-auto">
-                <div class="border-b border-rootBorder pb-3 mb-4">
-                    <h2 class="text-xl sm:text-2xl font-bold cinzel-title text-rootForest flex items-center gap-2">
-                        <i data-lucide="plus-circle" class="w-6 h-6 text-rootGold"></i> Record Match
-                    </h2>
-                    <p class="text-xs sm:text-sm text-stone-600 mt-1">Select factions and optional player names in exact finish order (1st to 4th place).</p>
-                </div>
-
-                <form id="matchForm" onsubmit="handleMatchSubmit(event)" class="space-y-4 sm:space-y-6">
-                    <div class="grid grid-cols-1 gap-4">
-                        <!-- 1st Place -->
-                        <div class="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-300 shadow-sm relative">
-                            <div class="absolute -top-3 left-4 bg-amber-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                <i class="fa-solid fa-crown text-amber-200"></i> 1st Place Winner
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Faction *</label>
-                                    <select id="p1-faction" required class="w-full p-2 rounded-lg border border-stone-300 bg-white font-semibold text-rootForest focus:ring-2 focus:ring-rootGold text-sm"></select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Player Name</label>
-                                    <input type="text" id="p1-player" placeholder="e.g. Alice" class="w-full p-2 rounded-lg border border-stone-300 bg-white text-sm font-medium text-rootForest">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2nd Place -->
-                        <div class="p-3.5 rounded-xl bg-slate-50 border-2 border-slate-300 shadow-sm relative">
-                            <div class="absolute -top-3 left-4 bg-slate-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">2nd Place</div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Faction *</label>
-                                    <select id="p2-faction" required class="w-full p-2 rounded-lg border border-stone-300 bg-white font-semibold text-rootForest text-sm"></select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Player Name</label>
-                                    <input type="text" id="p2-player" placeholder="e.g. Bob" class="w-full p-2 rounded-lg border border-stone-300 bg-white text-sm font-medium text-rootForest">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3rd Place -->
-                        <div class="p-3.5 rounded-xl bg-orange-50 border-2 border-orange-200 shadow-sm relative">
-                            <div class="absolute -top-3 left-4 bg-amber-700 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">3rd Place</div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Faction *</label>
-                                    <select id="p3-faction" required class="w-full p-2 rounded-lg border border-stone-300 bg-white font-semibold text-rootForest text-sm"></select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Player Name</label>
-                                    <input type="text" id="p3-player" placeholder="e.g. Charlie" class="w-full p-2 rounded-lg border border-stone-300 bg-white text-sm font-medium text-rootForest">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 4th Place -->
-                        <div class="p-3.5 rounded-xl bg-stone-100 border-2 border-stone-300 shadow-sm relative">
-                            <div class="absolute -top-3 left-4 bg-stone-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">4th Place</div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Faction *</label>
-                                    <select id="p4-faction" required class="w-full p-2 rounded-lg border border-stone-300 bg-white font-semibold text-rootForest text-sm"></select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-700 mb-1">Player Name</label>
-                                    <input type="text" id="p4-player" placeholder="e.g. David" class="w-full p-2 rounded-lg border border-stone-300 bg-white text-sm font-medium text-rootForest">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 flex justify-end">
-                        <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-rootGold hover:bg-rootGoldHover text-rootForest font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base">
-                            <i data-lucide="check" class="w-5 h-5"></i> Save & Sync to Cloud
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- VIEW 3: MATCH HISTORY -->
-        <section id="view-matchhistory" class="hidden space-y-6">
-            <div class="wood-panel rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div class="pb-3 mb-4 border-b border-rootBorder">
-                    <h2 class="text-xl sm:text-2xl font-bold cinzel-title text-rootForest flex items-center gap-2">
-                        <i data-lucide="history" class="w-6 h-6 text-rootGold"></i> Recorded Games Log
-                    </h2>
-                    <p class="text-xs sm:text-sm text-stone-600 mt-1">Matches synced live from Supabase database.</p>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[600px]">
-                        <thead>
-                            <tr class="bg-rootForestLight text-amber-100 text-xs uppercase font-bold tracking-wider">
-                                <th class="p-2.5 rounded-l-lg">Game #</th>
-                                <th class="p-2.5">Date</th>
-                                <th class="p-2.5">1st Place</th>
-                                <th class="p-2.5">2nd Place</th>
-                                <th class="p-2.5">3rd Place</th>
-                                <th class="p-2.5">4th Place</th>
-                                <th class="p-2.5 rounded-r-lg text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="matchHistoryTable" class="divide-y divide-stone-200 text-xs sm:text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW 4: PLAYER LEADERBOARD -->
-        <section id="view-players" class="hidden space-y-6">
-            <div class="wood-panel rounded-2xl p-4 sm:p-6 shadow-xl">
-                <div class="pb-3 mb-4 border-b border-rootBorder">
-                    <h2 class="text-xl sm:text-2xl font-bold cinzel-title text-rootForest flex items-center gap-2">
-                        <i data-lucide="users" class="w-6 h-6 text-rootGold"></i> Player Standings
-                    </h2>
-                    <p class="text-xs sm:text-sm text-stone-600 mt-1">Track player Elo ratings across all played matches.</p>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[550px]">
-                        <thead>
-                            <tr class="bg-rootForestLight text-amber-100 text-xs uppercase font-bold tracking-wider">
-                                <th class="p-2.5 rounded-l-lg">Rank</th>
-                                <th class="p-2.5">Player</th>
-                                <th class="p-2.5">Elo Rating</th>
-                                <th class="p-2.5">Games</th>
-                                <th class="p-2.5">Wins</th>
-                                <th class="p-2.5">Win Rate</th>
-                                <th class="p-2.5 rounded-r-lg">Fav Faction</th>
-                            </tr>
-                        </thead>
-                        <tbody id="playerLeaderboardTable" class="divide-y divide-stone-200 text-xs sm:text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
-
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- CONSTANTS & STATE ---
-        const FACTIONS = [
-            { id: "marquise", name: "Marquise de Cat", icon: "fa-cat", color: "#e8722a" },
-            { id: "eyrie", name: "Eyrie Dynasties", icon: "fa-crow", color: "#2170b5" },
-            { id: "alliance", name: "Woodland Alliance", icon: "fa-tree", color: "#33a02c" },
-            { id: "vagabond", name: "Vagabond", icon: "fa-mask", color: "#7570b3" },
-            { id: "lizard", name: "Lizard Cult", icon: "fa-dragon", color: "#fb9a99" },
-            { id: "riverfolk", name: "Riverfolk Company", icon: "fa-otter", color: "#1b9e77" },
-            { id: "duchy", name: "Underground Duchy", icon: "fa-cubes", color: "#e6ab02" },
-            { id: "corvid", name: "Corvid Conspiracy", icon: "fa-feather", color: "#a6761d" },
-            { id: "hundreds", name: "Lord of the Hundreds", icon: "fa-shield-cat", color: "#e41a1c" },
-            { id: "keepers", name: "Keepers in Iron", icon: "fa-hammer", color: "#666666" }
+        // HARDCODED SUPABASE CREDENTIALS
+        const SUPABASE_URL = "https://yztnadtsvdadxbfkpovk.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6dG5hZHRzdmRhZHhiZmtwb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MTAwNDAsImV4cCI6MjEwNjA4NjA0MH0.uBWmRHpyyH-LYuMTlQykaHZ_H6Eo8sqmZUHrEP5safU";
+
+        // DEFAULT FACTIONS (Includes Homeland Expansion)
+        const DEFAULT_FACTIONS = [
+            "Marquise de Cat", 
+            "Eyrie Dynasties", 
+            "Woodland Alliance", 
+            "Vagabond", 
+            "Lizard Cult", 
+            "Riverfolk Company", 
+            "Underground Duchy", 
+            "Corvid Conspiracy", 
+            "Lord of the Hundreds", 
+            "Keepers in Iron",
+            "Knaves of the Deepwood",
+            "Twilight Council",
+            "Lilypad Diaspora"
         ];
 
-        let matches = [];
+        // STATE
         let supabaseClient = null;
+        let factions = [...DEFAULT_FACTIONS];
+        let players = ["Player 1", "Player 2", "Player 3", "Player 4"];
+        let matches = [];
 
-        // --- SUPABASE SETUP ---
-        function initSupabase() {
-            const url = localStorage.getItem('supabase_url');
-            const key = localStorage.getItem('supabase_key');
-
-            if (url && key && window.supabase) {
-                try {
-                    supabaseClient = window.supabase.createClient(url, key);
-                    document.getElementById('syncStatusText').textContent = "Cloud Active";
-                    fetchCloudMatches();
-                } catch(e) {
-                    document.getElementById('syncStatusText').textContent = "Connection Error";
-                }
-            } else {
-                document.getElementById('syncStatusText').textContent = "Offline Mode";
-                loadLocalMatches();
-            }
-        }
-
-        function openConfigModal() {
-            document.getElementById('cfg-url').value = localStorage.getItem('supabase_url') || '';
-            document.getElementById('cfg-key').value = localStorage.getItem('supabase_key') || '';
-            document.getElementById('configModal').classList.remove('hidden');
-        }
-
-        function saveSupabaseConfig() {
-            const url = document.getElementById('cfg-url').value.trim();
-            const key = document.getElementById('cfg-key').value.trim();
-
-            if (url && key) {
-                localStorage.setItem('supabase_url', url);
-                localStorage.setItem('supabase_key', key);
-                document.getElementById('configModal').classList.add('hidden');
-                initSupabase();
-                showToast("Supabase credentials saved!", "check");
-            } else {
-                alert("Please enter both URL and Key.");
-            }
-        }
-
-        // --- DATA FETCH & SYNC ---
-        async function fetchCloudMatches() {
-            if (!supabaseClient) {
-                loadLocalMatches();
-                return;
-            }
-
-            document.getElementById('syncStatusText').textContent = "Syncing...";
-            try {
-                const { data, error } = await supabaseClient.from('matches').select('*').order('created_at', { ascending: true });
-                if (error) throw error;
-
-                matches = data ? data.map(row => row.data) : [];
-                saveLocalMatches(); // Fallback mirror
-                renderAllViews();
-                document.getElementById('syncStatusText').textContent = "Cloud Synced";
-            } catch (err) {
-                console.error("Cloud sync failed:", err);
-                document.getElementById('syncStatusText').textContent = "Sync Failed (Using Cache)";
-                loadLocalMatches();
-            }
-        }
-
-        async function saveMatchToCloud(matchData) {
-            matches.push(matchData);
-            saveLocalMatches();
-            renderAllViews();
-
-            if (supabaseClient) {
-                try {
-                    const { error } = await supabaseClient.from('matches').insert([{ data: matchData }]);
-                    if (error) console.error("Cloud insert error:", error);
-                    else fetchCloudMatches();
-                } catch(err) {
-                    console.error("Insert failed:", err);
-                }
-            }
-        }
-
-        function saveLocalMatches() {
-            localStorage.setItem('root_matches_cache', JSON.stringify(matches));
-        }
-
-        function loadLocalMatches() {
-            const cached = localStorage.getItem('root_matches_cache');
-            if (cached) {
-                try { matches = JSON.parse(cached); } catch(e) { matches = []; }
-            }
-            renderAllViews();
-        }
-
-        // --- INIT ---
+        // INITIALIZATION
         window.addEventListener('DOMContentLoaded', () => {
-            populateFactionDropdowns();
             initSupabase();
-            lucide.createIcons();
+            buildPlacementInputs();
         });
 
-        // --- DROPDOWNS ---
-        function populateFactionDropdowns() {
-            ['p1-faction', 'p2-faction', 'p3-faction', 'p4-faction'].forEach((id, idx) => {
-                const el = document.getElementById(id);
-                el.innerHTML = '';
-                FACTIONS.forEach((f, fIdx) => {
-                    const opt = document.createElement('option');
-                    opt.value = f.id;
-                    opt.textContent = f.name;
-                    if (fIdx === idx) opt.selected = true;
-                    el.appendChild(opt);
-                });
-            });
+        function initSupabase() {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                loadDataFromSupabase();
+            } else {
+                showToast("Supabase SDK failed to load.", "exclamation-triangle");
+            }
         }
 
-        // --- ELO ENGINE ---
-        function calculateCurrentStats() {
-            const factionStats = {};
-            FACTIONS.forEach(f => {
-                factionStats[f.id] = { id: f.id, name: f.name, color: f.color, icon: f.icon, elo: 1500, games: 0, wins: 0 };
-            });
-
-            const playerStats = {};
-
-            matches.forEach((m) => {
-                const positions = [m.p1, m.p2, m.p3, m.p4];
-                const K = 32;
-
-                // Faction Pairwise
-                const fDeltas = [0, 0, 0, 0];
-                for (let i = 0; i < 4; i++) {
-                    for (let j = i + 1; j < 4; j++) {
-                        const r1 = factionStats[positions[i].faction].elo;
-                        const r2 = factionStats[positions[j].faction].elo;
-                        const e1 = 1 / (1 + Math.pow(10, (r2 - r1) / 400));
-                        const e2 = 1 / (1 + Math.pow(10, (r1 - r2) / 400));
-                        fDeltas[i] += K * (1 - e1);
-                        fDeltas[j] += K * (0 - e2);
-                    }
+        async function loadDataFromSupabase() {
+            try {
+                const { data, error } = await supabaseClient.from('matches').select('*').order('id', { ascending: true });
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    matches = data.map(row => row.data);
+                } else {
+                    matches = [];
                 }
-                positions.forEach((p, idx) => {
-                    factionStats[p.faction].elo += fDeltas[idx];
-                    factionStats[p.faction].games += 1;
-                    if (idx === 0) factionStats[p.faction].wins += 1;
-                });
+                
+                updateSyncStatus(true);
+                recalculateAndRender();
+            } catch (err) {
+                console.error("Supabase load error:", err);
+                updateSyncStatus(false);
+                recalculateAndRender();
+            }
+        }
 
-                // Player Pairwise
-                const pDeltas = [0, 0, 0, 0];
+        function updateSyncStatus(connected) {
+            const el = document.getElementById('sync-status');
+            if (connected) {
+                el.className = "flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-emerald-400";
+                el.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Connected</span>';
+            } else {
+                el.className = "flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-rose-400";
+                el.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Offline Mode</span>';
+            }
+        }
+
+        // MULTI-PLAYER ELO CALCULATION ENGINE (K=32)
+        function recalculateAndRender() {
+            // Reset ratings
+            let factionRatings = {};
+            factions.forEach(f => factionRatings[f] = { name: f, elo: 1500, games: 0, wins: 0 });
+
+            let playerRatings = {};
+            players.forEach(p => playerRatings[p] = { name: p, elo: 1500, games: 0, wins: 0 });
+
+            // Process matches
+            matches.forEach((match) => {
+                const K = 32;
+                const placings = match.placements; // [1st, 2nd, 3rd, 4th]
+
+                // Extract current ratings
+                let fRatings = placings.map(p => factionRatings[p.faction] ? factionRatings[p.faction].elo : 1500);
+                let pRatings = placings.map(p => playerRatings[p.player] ? playerRatings[p.player].elo : 1500);
+
+                let fDeltas = [0, 0, 0, 0];
+                let pDeltas = [0, 0, 0, 0];
+
+                // Pairwise comparisons
                 for (let i = 0; i < 4; i++) {
                     for (let j = i + 1; j < 4; j++) {
-                        const p1Name = positions[i].player ? positions[i].player.trim() : null;
-                        const p2Name = positions[j].player ? positions[j].player.trim() : null;
-                        if (p1Name && p2Name) {
-                            if (!playerStats[p1Name]) playerStats[p1Name] = { name: p1Name, elo: 1500, games: 0, wins: 0, factions: {} };
-                            if (!playerStats[p2Name]) playerStats[p2Name] = { name: p2Name, elo: 1500, games: 0, wins: 0, factions: {} };
-                            const pr1 = playerStats[p1Name].elo;
-                            const pr2 = playerStats[p2Name].elo;
-                            const pe1 = 1 / (1 + Math.pow(10, (pr2 - pr1) / 400));
-                            const pe2 = 1 / (1 + Math.pow(10, (pr1 - pr2) / 400));
-                            pDeltas[i] += K * (1 - pe1);
-                            pDeltas[j] += K * (0 - pe2);
+                        // i placed higher than j
+                        let fE_i = 1 / (1 + Math.pow(10, (fRatings[j] - fRatings[i]) / 400));
+                        let fE_j = 1 / (1 + Math.pow(10, (fRatings[i] - fRatings[j]) / 400));
+                        fDeltas[i] += K * (1 - fE_i);
+                        fDeltas[j] += K * (0 - fE_j);
+
+                        if (pRatings[i] !== undefined && pRatings[j] !== undefined) {
+                            let pE_i = 1 / (1 + Math.pow(10, (pRatings[j] - pRatings[i]) / 400));
+                            let pE_j = 1 / (1 + Math.pow(10, (pRatings[i] - pRatings[j]) / 400));
+                            pDeltas[i] += K * (1 - pE_i);
+                            pDeltas[j] += K * (0 - pE_j);
                         }
                     }
                 }
-                positions.forEach((p, idx) => {
-                    const pName = p.player ? p.player.trim() : null;
+
+                // Apply Deltas
+                for (let i = 0; i < 4; i++) {
+                    let fName = placings[i].faction;
+                    let pName = placings[i].player;
+
+                    if (!factionRatings[fName]) factionRatings[fName] = { name: fName, elo: 1500, games: 0, wins: 0 };
+                    factionRatings[fName].elo += fDeltas[i];
+                    factionRatings[fName].games += 1;
+                    if (i === 0) factionRatings[fName].wins += 1;
+
                     if (pName) {
-                        if (!playerStats[pName]) playerStats[pName] = { name: pName, elo: 1500, games: 0, wins: 0, factions: {} };
-                        playerStats[pName].elo += pDeltas[idx];
-                        playerStats[pName].games += 1;
-                        if (idx === 0) playerStats[pName].wins += 1;
-                        playerStats[pName].factions[p.faction] = (playerStats[pName].factions[p.faction] || 0) + 1;
+                        if (!playerRatings[pName]) playerRatings[pName] = { name: pName, elo: 1500, games: 0, wins: 0 };
+                        playerRatings[pName].elo += pDeltas[i];
+                        playerRatings[pName].games += 1;
+                        if (i === 0) playerRatings[pName].wins += 1;
                     }
-                });
+                }
             });
 
-            return { factionStats, playerStats };
-        }
-
-        // --- RENDER VIEWS ---
-        function renderAllViews() {
-            const { factionStats, playerStats } = calculateCurrentStats();
-            renderTierList(factionStats);
+            renderTierList(Object.values(factionRatings));
+            renderPlayerLeaderboard(Object.values(playerRatings));
             renderMatchHistory();
-            renderPlayerLeaderboard(playerStats);
-            document.getElementById('totalGamesCount').textContent = matches.length;
-            lucide.createIcons();
         }
 
-        function renderTierList(factionStats) {
+        // RENDER TIER LIST
+        function renderTierList(factionList) {
+            factionList.sort((a, b) => b.elo - a.elo);
+
             const tiers = {
-                S: document.getElementById('tier-S-cards'),
-                A: document.getElementById('tier-A-cards'),
-                B: document.getElementById('tier-B-cards'),
-                C: document.getElementById('tier-C-cards'),
-                D: document.getElementById('tier-D-cards')
+                'S Tier (1650+)': { color: 'border-amber-500 bg-amber-500/10 text-amber-400', items: [] },
+                'A Tier (1550 - 1649)': { color: 'border-purple-500 bg-purple-500/10 text-purple-400', items: [] },
+                'B Tier (1450 - 1549)': { color: 'border-blue-500 bg-blue-500/10 text-blue-400', items: [] },
+                'C Tier (1350 - 1449)': { color: 'border-emerald-500 bg-emerald-500/10 text-emerald-400', items: [] },
+                'D Tier (<1350)': { color: 'border-rose-500 bg-rose-500/10 text-rose-400', items: [] }
             };
-            Object.values(tiers).forEach(el => el.innerHTML = '');
 
-            const sorted = Object.values(factionStats).sort((a, b) => b.elo - a.elo);
+            factionList.forEach(f => {
+                if (f.elo >= 1650) tiers['S Tier (1650+)'].items.push(f);
+                else if (f.elo >= 1550) tiers['A Tier (1550 - 1649)'].items.push(f);
+                else if (f.elo >= 1450) tiers['B Tier (1450 - 1549)'].items.push(f);
+                else if (f.elo >= 1350) tiers['C Tier (1350 - 1449)'].items.push(f);
+                else tiers['D Tier (<1350)'].items.push(f);
+            });
 
-            sorted.forEach(f => {
-                const roundElo = Math.round(f.elo);
-                const winRate = f.games > 0 ? ((f.wins / f.games) * 100).toFixed(1) : "0.0";
-                let t = 'D';
-                if (roundElo >= 1600) t = 'S';
-                else if (roundElo >= 1525) t = 'A';
-                else if (roundElo >= 1475) t = 'B';
-                else if (roundElo >= 1400) t = 'C';
+            const container = document.getElementById('tier-container');
+            container.innerHTML = '';
 
-                tiers[t].innerHTML += `
-                    <div class="wood-card rounded-xl p-3 sm:p-4 flex flex-col justify-between border-l-4" style="border-left-color: ${f.color};">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white text-xs sm:text-sm" style="background-color: ${f.color};">
-                                    <i class="fa-solid ${f.icon}"></i>
-                                </div>
-                                <span class="font-bold text-xs sm:text-sm text-slate-800">${f.name}</span>
-                            </div>
-                            <span class="text-lg sm:text-xl font-extrabold text-rootForest font-mono">${roundElo}</span>
+            Object.entries(tiers).forEach(([tierName, tierData]) => {
+                if (tierData.items.length === 0) return;
+
+                let html = `
+                    <div class="bg-slate-900 border ${tierData.color.split(' ')[0]} rounded-2xl p-4 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="font-bold ${tierData.color.split(' ')[2]} text-sm tracking-wider uppercase">${tierName}</span>
+                            <span class="text-xs text-slate-500">${tierData.items.length} Factions</span>
                         </div>
-                        <div class="mt-2 pt-2 border-t border-stone-100 flex justify-between items-center text-[10px] sm:text-xs text-stone-500 font-medium">
-                            <span>Games: <strong class="text-stone-800">${f.games}</strong></span>
-                            <span>Wins: <strong class="text-stone-800">${f.wins}</strong></span>
-                            <span>Win Rate: <strong class="text-emerald-700">${winRate}%</strong></span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                `;
+
+                tierData.items.forEach(f => {
+                    let winRate = f.games > 0 ? Math.round((f.wins / f.games) * 100) : 0;
+                    html += `
+                        <div class="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3 flex justify-between items-center">
+                            <div>
+                                <h4 class="font-semibold text-slate-200 text-sm">${f.name}</h4>
+                                <p class="text-xs text-slate-400">${f.games} Games | ${winRate}% WR</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-amber-500">${Math.round(f.elo)}</span>
+                                <span class="block text-[10px] text-slate-500 uppercase">Elo</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        // RENDER PLAYER LEADERBOARD
+        function renderPlayerLeaderboard(playerList) {
+            playerList.sort((a, b) => b.elo - a.elo);
+            const tbody = document.getElementById('player-table-body');
+            tbody.innerHTML = '';
+
+            playerList.forEach((p, idx) => {
+                let winRate = p.games > 0 ? Math.round((p.wins / p.games) * 100) : 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-4 font-bold text-slate-400">#${idx + 1}</td>
+                        <td class="p-4 font-semibold text-slate-200">${p.name}</td>
+                        <td class="p-4 font-bold text-amber-500">${Math.round(p.elo)}</td>
+                        <td class="p-4 text-slate-400">${p.games}</td>
+                        <td class="p-4 text-slate-400">${p.wins}</td>
+                        <td class="p-4 text-slate-400">${winRate}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // RENDER MATCH HISTORY
+        function renderMatchHistory() {
+            const list = document.getElementById('match-history-list');
+            list.innerHTML = '';
+
+            if (matches.length === 0) {
+                list.innerHTML = `<div class="p-8 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">No matches recorded yet.</div>`;
+                return;
+            }
+
+            matches.slice().reverse().forEach((m, idx) => {
+                let dateStr = m.date ? new Date(m.date).toLocaleDateString() : 'Recent';
+                let html = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <div>
+                            <span class="text-xs font-semibold text-amber-500 uppercase">Match #${matches.length - idx} &bull; ${dateStr}</span>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2 text-sm">
+                                <div><span class="text-slate-500 text-xs block">1st Place</span><span class="font-semibold text-emerald-400">${m.placements[0].faction}</span> <span class="text-xs text-slate-400">(${m.placements[0].player})</span></div>
+                                <div><span class="text-slate-500 text-xs block">2nd Place</span><span class="font-medium text-slate-300">${m.placements[1].faction}</span> <span class="text-xs text-slate-500">(${m.placements[1].player})</span></div>
+                                <div><span class="text-slate-500 text-xs block">3rd Place</span><span class="font-medium text-slate-400">${m.placements[2].faction}</span> <span class="text-xs text-slate-500">(${m.placements[2].player})</span></div>
+                                <div><span class="text-slate-500 text-xs block">4th Place</span><span class="font-medium text-slate-500">${m.placements[3].faction}</span> <span class="text-xs text-slate-500">(${m.placements[3].player})</span></div>
+                            </div>
                         </div>
                     </div>
                 `;
-            });
-
-            Object.keys(tiers).forEach(k => {
-                if (tiers[k].children.length === 0) tiers[k].innerHTML = `<p class="text-xs text-stone-400 italic py-1">No factions in this tier.</p>`;
+                list.innerHTML += html;
             });
         }
 
-        function renderMatchHistory() {
-            const tbody = document.getElementById('matchHistoryTable');
-            tbody.innerHTML = '';
-            if (matches.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-stone-400 italic">No matches logged yet.</td></tr>`;
-                return;
-            }
+        // UI HELPERS & MODALS
+        function buildPlacementInputs() {
+            const container = document.getElementById('placements-container');
+            container.innerHTML = '';
 
-            matches.slice().reverse().forEach((m, revIdx) => {
-                const originalIndex = matches.length - 1 - revIdx;
-                const d = new Date(m.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                const formatP = p => {
-                    const f = FACTIONS.find(x => x.id === p.faction);
-                    return `<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:${f?f.color:'#ccc'}"></span>${f?f.name:p.faction} ${p.player ? `<span class="text-stone-400 text-[10px]">(${p.player})</span>`:''}</span>`;
-                };
+            const titles = ["1st Place (Winner)", "2nd Place", "3rd Place", "4th Place"];
+            const colors = ["border-amber-500/40 bg-amber-500/5", "border-slate-700", "border-slate-800", "border-slate-800"];
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-amber-50/50";
-                tr.innerHTML = `
-                    <td class="p-2.5 font-bold text-stone-600">#${originalIndex + 1}</td>
-                    <td class="p-2.5 text-stone-500 text-xs">${d}</td>
-                    <td class="p-2.5 font-semibold">${formatP(m.p1)}</td>
-                    <td class="p-2.5">${formatP(m.p2)}</td>
-                    <td class="p-2.5">${formatP(m.p3)}</td>
-                    <td class="p-2.5">${formatP(m.p4)}</td>
-                    <td class="p-2.5 text-center">
-                        <button onclick="deleteMatch(${originalIndex})" class="text-rose-600 hover:text-rose-800 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
+            for (let i = 0; i < 4; i++) {
+                let fOptions = factions.map(f => `<option value="${f}">${f}</option>`).join('');
+                let pOptions = players.map(p => `<option value="${p}">${p}</option>`).join('');
+
+                container.innerHTML += `
+                    <div class="p-3 border ${colors[i]} rounded-xl space-y-2">
+                        <label class="text-xs font-semibold text-slate-400">${titles[i]}</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="p-faction-${i}" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-200">
+                                ${fOptions}
+                            </select>
+                            <select id="p-player-${i}" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-200">
+                                ${pOptions}
+                            </select>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderPlayerLeaderboard(playerStats) {
-            const tbody = document.getElementById('playerLeaderboardTable');
-            tbody.innerHTML = '';
-            const players = Object.values(playerStats).sort((a, b) => b.elo - a.elo);
-
-            if (players.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-stone-400 italic">No player stats available. Log player names in matches!</td></tr>`;
-                return;
             }
-
-            players.forEach((p, idx) => {
-                const wr = p.games > 0 ? ((p.wins / p.games) * 100).toFixed(1) : "0.0";
-                let topF = '-';
-                let maxC = 0;
-                Object.entries(p.factions).forEach(([fId, cnt]) => { if (cnt > maxC) { maxC = cnt; topF = fId; } });
-                const fav = FACTIONS.find(x => x.id === topF);
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-amber-50/50";
-                tr.innerHTML = `
-                    <td class="p-2.5 font-bold ${idx === 0 ? 'text-amber-600 text-base' : 'text-stone-600'}">#${idx + 1}</td>
-                    <td class="p-2.5 font-bold text-stone-800">${p.name}</td>
-                    <td class="p-2.5 font-mono font-bold text-rootForest">${Math.round(p.elo)}</td>
-                    <td class="p-2.5">${p.games}</td>
-                    <td class="p-2.5 text-emerald-700 font-semibold">${p.wins}</td>
-                    <td class="p-2.5 font-bold">${wr}%</td>
-                    <td class="p-2.5">${fav ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-white" style="background-color:${fav.color}"><i class="fa-solid ${fav.icon}"></i> ${fav.name}</span>` : '-'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
-        // --- SUBMIT MATCH ---
-        function handleMatchSubmit(e) {
+        async function submitMatch(e) {
             e.preventDefault();
-            const p1 = document.getElementById('p1-faction').value;
-            const p2 = document.getElementById('p2-faction').value;
-            const p3 = document.getElementById('p3-faction').value;
-            const p4 = document.getElementById('p4-faction').value;
 
-            if (new Set([p1, p2, p3, p4]).size < 4) {
-                alert("Each finishing position must have a unique faction!");
-                return;
+            let placements = [];
+            for (let i = 0; i < 4; i++) {
+                let faction = document.getElementById(`p-faction-${i}`).value;
+                let player = document.getElementById(`p-player-${i}`).value;
+                placements.push({ faction, player });
             }
 
             const matchData = {
+                id: Date.now(),
                 date: new Date().toISOString(),
-                p1: { faction: p1, player: document.getElementById('p1-player').value },
-                p2: { faction: p2, player: document.getElementById('p2-player').value },
-                p3: { faction: p3, player: document.getElementById('p3-player').value },
-                p4: { faction: p4, player: document.getElementById('p4-player').value }
+                placements: placements
             };
 
-            saveMatchToCloud(matchData);
-            showToast("Match saved!", "check");
-            switchTab('tierlist');
+            matches.push(matchData);
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('matches').insert([{ data: matchData }]);
+                } catch (err) {
+                    console.error("Failed to save match to Supabase:", err);
+                }
+            }
+
+            closeLogModal();
+            recalculateAndRender();
+            showToast("Match saved successfully!", "check");
         }
 
-        async function deleteMatch(index) {
-            if (confirm("Delete this match?")) {
-                matches.splice(index, 1);
-                saveLocalMatches();
-                renderAllViews();
-
-                if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('matches').delete().neq('id', 0); // Reset table in demo context
-                        for (let m of matches) {
-                            await supabaseClient.from('matches').insert([{ data: m }]);
-                        }
-                        fetchCloudMatches();
-                    } catch(e) { console.error(e); }
-                }
+        function submitAddFaction() {
+            const input = document.getElementById('custom-faction-input');
+            const val = input.value.trim();
+            if (val && !factions.includes(val)) {
+                factions.push(val);
+                buildPlacementInputs();
+                recalculateAndRender();
+                input.value = '';
+                showToast(`Added ${val}`, "plus");
             }
         }
 
-        // --- UI UTILS ---
-        function switchTab(t) {
-            ['tierlist', 'logmatch', 'matchhistory', 'players'].forEach(tab => {
-                document.getElementById(`view-${tab}`).classList.toggle('hidden', tab !== t);
-                const btn = document.getElementById(`tab-${tab}`);
-                if (tab === t) {
-                    btn.className = "tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootPaper text-rootForest border-t-2 border-x-2 border-rootGold transition flex items-center gap-1.5 whitespace-nowrap";
-                } else {
-                    btn.className = "tab-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-t-lg bg-rootForestLight text-amber-200 hover:bg-emerald-800 transition flex items-center gap-1.5 whitespace-nowrap";
-                }
-            });
-            lucide.createIcons();
+        function submitAddPlayer() {
+            const input = document.getElementById('new-player-name');
+            const val = input.value.trim();
+            if (val && !players.includes(val)) {
+                players.push(val);
+                buildPlacementInputs();
+                recalculateAndRender();
+                closeAddPlayerModal();
+                input.value = '';
+                showToast(`Player ${val} added`, "user-plus");
+            }
         }
 
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(matches, null, 2));
-            const dl = document.createElement('a');
-            dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", `root_elo_backup.json`);
-            document.body.appendChild(dl);
-            dl.click();
-            dl.remove();
+        async function confirmResetData() {
+            if (confirm("Are you sure you want to wipe all logged matches? This cannot be undone.")) {
+                matches = [];
+                if (supabaseClient) {
+                    await supabaseClient.from('matches').delete().neq('id', 0);
+                }
+                recalculateAndRender();
+                showToast("All data wiped.", "trash");
+            }
         }
+
+        function switchTab(tab) {
+            ['tier', 'players', 'matches'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = "pb-3 border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2";
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tab}`).className = "pb-3 border-b-2 border-amber-500 text-amber-500 flex items-center gap-2";
+        }
+
+        function openLogModal() { document.getElementById('logModal').classList.remove('hidden'); }
+        function closeLogModal() { document.getElementById('logModal').classList.add('hidden'); }
+        function openAddPlayerModal() { document.getElementById('addPlayerModal').classList.remove('hidden'); }
+        function closeAddPlayerModal() { document.getElementById('addPlayerModal').classList.add('hidden'); }
+        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
 
         function showToast(msg, icon = "check") {
-            const t = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = msg;
-            document.getElementById('toastIcon').setAttribute('data-lucide', icon);
-            lucide.createIcons();
-            t.classList.remove('hidden');
-            setTimeout(() => t.classList.add('hidden'), 3000);
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').className = `fas fa-${icon}`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
         }
     </script>
 </body>
